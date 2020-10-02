@@ -53,17 +53,13 @@ public:
     double max_normal_traction;
     double approx_radius;
 
-    //friend struct getTraj;
+    double min_w = 0;
+    double max_w = 2*M_PI;
 
-    void getMax(double min_w, double max_w);
+    double getTraj(double& angle_fwd);
+
+    //void getMax();
 
 };
-
-//struct getTraj
-//{
-//        Model M;
-//        double operator()(double& angle_fwd);
-
-//};
 
 #endif // MODEL_H

@@ -1,12 +1,23 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
+#include "boost/math/tools/minima.hpp"
+#include <iostream>
+#include <cmath>
+#include <Eigen/Geometry>
+#include <iomanip>
 #include <cfloat>
+
+using namespace std;
+using boost::math::tools::brent_find_minima;
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    boost::uintmax_t max_iter = 30;
+    int bits = std::numeric_limits<double>::digits;
 
     Model *model = new Model;
     model->isBoundary = false;
@@ -16,7 +27,12 @@ MainWindow::MainWindow(QWidget *parent)
     model->AddSector(0.0804524,0.126599,7.43639e-06,-0.0694121,0.132974,6.11511e-06,4.62,1.46422,-0.0410333);
     model->AddSector(-0.0694121,0.132974,6.11511e-06,-0.149865,0.00637403,1.39815e-05,3.58378,1.18685,-0.207684);
     model->AddSector(-0.149865,0.00637403,1.39815e-05,-0.0804524,-0.126599,7.1294e-06,3.60604,1.10554,0.212817);
-    model->getMax(0,2*M_PI);
+
+    std::pair<double, double> r = brent_find_minima([model](double angle_fwd){return model->getTraj(angle_fwd);}, model->min_w, model->max_w, bits, max_iter);
+    std::cout << "iterations: " << max_iter << '\n';
+    std::cout << std::setprecision(16);
+    std::cout << "Model 1: x at minimum = " << r.first << ", f(" << r.first << ") = " << r.second << std::endl;
+
     models.push_back(model);
 
     model = new Model;
@@ -24,14 +40,30 @@ MainWindow::MainWindow(QWidget *parent)
     model->AddSector(-0.0867755,0.05456,0.000800575,-0.085338,-0.0808328,-0.00291115,18.8618,5.24858,0.604117);
     model->AddSector(-0.085338,-0.0808328,-0.00291115,0.0112856,-0.0864482,-0.00227359,10.1852,-0.517818,2.41207);
     model->AddSector(0.0112856,-0.0864482,-0.00227359,0.0867755,-0.05456,-0.000736006,1.68372,-1.84484,3.50632);
-    model->getMax(0,2*M_PI);
+
+    max_iter = 30;
+    bits = std::numeric_limits<double>::digits;
+
+    r = brent_find_minima([model](double angle_fwd){return model->getTraj(angle_fwd);}, model->min_w, model->max_w, bits, max_iter);
+    std::cout << "iterations: " << max_iter << '\n';
+    std::cout << std::setprecision(16);
+    std::cout << "Model 2: x at minimum = " << r.first << ", f(" << r.first << ") = " << r.second << std::endl;
+
     models.push_back(model);
 
     model = new Model;
     model->isBoundary = true;
     model->AddSector(0.0871197,-0.0953093,-0.00147892,0.104189,0.00711211,-0.000556284,9.46015,1.12215,-2.48601);
     model->AddSector(0.104189,0.00711211,-0.000556284,0.0421382,0.0464292,0.000203371,3.49938,-0.69808,0.171079);
-    model->getMax(0,2*M_PI);
+
+    max_iter = 30;
+    bits = std::numeric_limits<double>::digits;
+
+    r = brent_find_minima([model](double angle_fwd){return model->getTraj(angle_fwd);}, model->min_w, model->max_w, bits, max_iter);
+    std::cout << "iterations: " << max_iter << '\n';
+    std::cout << std::setprecision(16);
+    std::cout << "Model 3: x at minimum = " << r.first << ", f(" << r.first << ") = " << r.second << std::endl;
+
     models.push_back(model);
 
     model = new Model;
@@ -39,7 +71,15 @@ MainWindow::MainWindow(QWidget *parent)
     model->AddSector(0.140231,0.0389385,2.62128e-06,0.0433272,0.11605,-4.62367e-06,0.55391,0.647449,-0.0864676);
     model->AddSector(0.0433272,0.11605,-4.62367e-06,-0.0928865,0.0981676,-6.09364e-06,1.26464,0.957015,-0.260301);
     model->AddSector(-0.0928865,0.0981676,-6.09364e-06,-0.140188,-0.0389793,2.08664e-06,1.50313,1.34882,-0.21918);
-    model->getMax(0,2*M_PI);
+
+    max_iter = 30;
+    bits = std::numeric_limits<double>::digits;
+
+    r = brent_find_minima([model](double angle_fwd){return model->getTraj(angle_fwd);}, model->min_w, model->max_w, bits, max_iter);
+    std::cout << "iterations: " << max_iter << '\n';
+    std::cout << std::setprecision(16);
+    std::cout << "Model 4: x at minimum = " << r.first << ", f(" << r.first << ") = " << r.second << std::endl;
+
     models.push_back(model);
 
     model = new Model;
@@ -51,7 +91,15 @@ MainWindow::MainWindow(QWidget *parent)
     model->AddSector(0.0806698,0.136044,-9.70057e-08,-0.025141,0.132821,2.93461e-06,1.2932,1.63841,-0.433953);
     model->AddSector(-0.025141,0.132821,2.93461e-06,-0.103108,0.0621824,5.95843e-06,1.21137,1.41362,-0.326353);
     model->AddSector(-0.103108,0.0621824,5.95843e-06,-0.121666,-0.0413276,7.31515e-06,1.15086,1.24152,-0.317631);
-    model->getMax(0,2*M_PI);
+
+    max_iter = 30;
+    bits = std::numeric_limits<double>::digits;
+
+    r = brent_find_minima([model](double angle_fwd){return model->getTraj(angle_fwd);}, model->min_w, model->max_w, bits, max_iter);
+    std::cout << "iterations: " << max_iter << '\n';
+    std::cout << std::setprecision(16);
+    std::cout << "Model 5: x at minimum = " << r.first << ", f(" << r.first << ") = " << r.second << std::endl;
+
     models.push_back(model);
 
 

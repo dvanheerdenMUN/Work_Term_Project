@@ -1,6 +1,7 @@
 #include "model.h"
 #include "boost/math/tools/minima.hpp"
 #include <iostream>
+#include <iomanip>
 #include <cmath>
 #include <cfloat>
 #include <Eigen/Geometry>
@@ -29,13 +30,9 @@ void Model::AddSector(double ux, double uy, double uz,
     fan.push_back(s);
 }
 
-struct funcdouble
+
+double Model::getTraj(double& angle_fwd)
 {
-    Model M;
-    double operator()(double const& angle_fwd)
-    {
-//double getTraj::operator()(double& angle_fwd)
-//{
         auto get_angle = [](Eigen::Vector2d u, Eigen::Vector2d v)
         {
             double dot = u.dot(v)/(u.norm()*v.norm());
@@ -46,7 +43,7 @@ struct funcdouble
 
         // precompute t0, t1 for each sector
         double end_angle =  0;
-        for(Model::Sector &s : M.fan)
+        for(Sector &s : fan)
         {
             s.angle0 = end_angle;
             s.angle_span = get_angle(s.u,s.v);
@@ -58,17 +55,19 @@ struct funcdouble
         }
 
         // evaluate the function for different angles and record the maximum
-        M.max_normal_traction = -DBL_MAX;
-        M.max_angle = end_angle;
+        this->max_normal_traction = -DBL_MAX;
+        this->max_angle = end_angle;
 
-        M.dir = Eigen::Vector2d::Zero();
+        this->dir = Eigen::Vector2d::Zero();
 
         // discretize (CCW)
-            Model::Result ssr;
+        for (std::size_t i=0; i<number_of_ponts; i++)
+        {
+            Result &ssr = results[i];
             ssr.tn = Eigen::Vector2d::Zero();
             ssr.traction[0] = ssr.traction[1] = Eigen::Vector2d::Zero();
 
-            //angle_fwd = (double)end_angle/M.number_of_ponts;
+            angle_fwd = (double)i*end_angle/number_of_ponts;
             ssr.angle_fwd = angle_fwd;
 
             double angle_bwd = angle_fwd+end_angle/2;
@@ -76,11 +75,11 @@ struct funcdouble
             ssr.angle_bwd = angle_bwd;
 
             // integrate traction
-            int sector = (M.isBoundary || angle_fwd < angle_bwd) ? 0 : 1;
+            int sector = (isBoundary || angle_fwd < angle_bwd) ? 0 : 1;
 
-            for (std::size_t f=0; f < M.fan.size(); f++)
+            for (std::size_t f=0; f < fan.size(); f++)
             {
-                Model::Sector &fp = M.fan[f];
+                Sector &fp = fan[f];
 
                 if (angle_fwd >= fp.angle0 && angle_fwd < fp.angle1)
                 {
@@ -100,7 +99,7 @@ struct funcdouble
                     sector = 1-sector;
                     ssr.traction[sector] += fp.t1 - tmult;
                 }
-                else if (!M.isBoundary && angle_bwd >= fp.angle0 && angle_bwd < fp.angle1)
+                else if (!isBoundary && angle_bwd >= fp.angle0 && angle_bwd < fp.angle1)
                 {
                     ssr.phi[1] = angle_bwd - fp.angle0;
                     ssr.theta[1] = fp.angle1 - angle_bwd;
@@ -132,32 +131,34 @@ struct funcdouble
             ssr.trac_normal = ssr.t0_normal-ssr.t1_normal;
             ssr.trac_tangential = ssr.t0_tangential-ssr.t1_tangential;
 
-            if(!M.isBoundary)
+            if(!isBoundary)
             {
                 ssr.trac_normal/=2;
                 ssr.trac_tangential/=2;
             }
 
-            if(M.max_normal_traction < ssr.trac_normal) {
-                M.max_normal_traction = ssr.trac_normal;
-                M.dir = ssr.tn;
+            if(max_normal_traction < ssr.trac_normal) {
+                max_normal_traction = ssr.trac_normal;
+                idx_max_sector = i;
+                dir = ssr.tn;
             }
+         // num_disc
+         }
 
-            return -ssr.trac_normal;
-        }
-};
-
-void Model::getMax(double min_w, double max_w)
-{
-    using boost::math::tools::brent_find_minima;
-
-        boost::uintmax_t max_iter = 30;
-        int bits = std::numeric_limits<double>::digits;
-
-        std::pair<double, double> r = brent_find_minima(funcdouble(), min_w, max_w, bits, max_iter);
-
-        std::cout << "x at minimum = " << r.first << ", f(" << r.first << ") = " << r.second << std::endl;
-}
+            return -(results->trac_normal);
+ }
 
 
+//void Model::getMax()
+//{
+//    using boost::math::tools::brent_find_minima;
+
+//        boost::uintmax_t max_iter = 30;
+//        int bits = std::numeric_limits<double>::digits;
+
+//        std::pair<double, double> r = brent_find_minima([this](double& angle_fwd){return this->getTraj(angle_fwd);}, this->min_w, this->max_w, bits, max_iter);
+//        std::cout << "iterations: " << max_iter << '\n';
+//        std::cout << std::setprecision(16);
+//        std::cout << "x at minimum = " << r.first << ", f(" << r.first << ") = " << r.second << std::endl;
+//}
 
