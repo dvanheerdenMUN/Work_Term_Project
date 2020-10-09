@@ -12,6 +12,13 @@
 
 #include <QtCharts>
 
+#include <QList>
+#include <QDir>
+#include <QDebug>
+#include <QFile>
+#include <QTextStream>
+#include <QVector>
+
 /*
 #include <QVTKOpenGLNativeWidget.h>
 #include <vtkGenericOpenGLRenderWindow.h>

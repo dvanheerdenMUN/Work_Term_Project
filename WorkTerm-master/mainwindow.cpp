@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <cfloat>
 
+
 using namespace std;
 using boost::math::tools::brent_find_minima;
 
@@ -223,6 +224,9 @@ void MainWindow::sliderValueChanged(int)
 
 void MainWindow::UpdateGUI()
 {
+    QVector<double> v1; //containers for x & y values of mohr's circle
+    QVector<double> v2;
+
     // TABLE
     int selected_idx = slider->value();
     Model::Result &res = selectedModel->results[selected_idx];
@@ -253,7 +257,25 @@ void MainWindow::UpdateGUI()
         ymin = std::min(ymin, val_y);
         ymax = std::max(ymax, val_y);
         series_mohr->append(val_x,val_y);
+
+        v1.append(val_x);
+        v2.append(val_y);
     }
+
+    //CSV FILE DATA TRANSFER
+    QString filename = "/Users/desiree/Desktop/Qt Code/WorkTerm-master/mohr.csv"; //Add desired path for file
+    QFile file(filename);
+    if (file.open(QIODevice::WriteOnly))
+    {
+        QTextStream stream(&file);
+        for (int c=0; c < v1.size(); c++ ) //v1 & v2 must have the same size
+        {
+            stream << v1[c] << "," << v2[c]   << Qt::endl;
+        }
+    }
+    file.close();
+
+    //PLOTS (CONTINUED)
     double span_y = ymax-ymin;
     double span_x = xmax-xmin;
     double span = std::max(span_y, span_x)*0.65;
@@ -296,7 +318,7 @@ void MainWindow::UpdateGUI()
     series_mohr_selected->append(res.trac_normal, res.trac_tangential);
 
     // VTK
-    int nSectors = selectedModel->fan.size();
+    //    int nSectors = selectedModel->fan.size();
 /*
     points->SetNumberOfPoints(nSectors*3);
     vtkIdType pts2[3];
